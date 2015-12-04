@@ -1,0 +1,17 @@
+{
+    "name": "ss/rating-service",
+    "description": "Student Shopper Rating Service",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Samuil Dragnev",
+            "email": "samuil.dragnev@gmail.com"
+        }
+    ],
+    "require": {
+        "php": ">=5.3.0",
+        "monolog/monolog": "1.*",
+        "slim/slim": "2.*",
+        "videlalvaro/php-amqplib": "2.5.*"
+    }
+}

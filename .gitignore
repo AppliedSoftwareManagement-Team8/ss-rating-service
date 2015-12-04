@@ -1,0 +1,6 @@
+/vendor/
+/logs/*
+composer.phar
+.DS_STORE
+composer.lock
+.idea
