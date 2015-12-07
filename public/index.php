@@ -18,34 +18,146 @@ $app->container->singleton('log', function () {
     return $log;
 });
 
-// Define routes
-$app->get('/', function () use ($app) {
-    // Sample log message
-    $app->log->info("Slim-Skeleton '/' route");
-    // Render index view
-    $app->render('index.html');
-});
+function getAllRatings() {
+    $app = \Slim\Slim::getInstance();
+    try {
+        $app->response->write(json_encode(RatingsDAO::getAll(), JSON_FORCE_OBJECT));
+        return json_encode($app->response->getBody());
+    } catch (Exception $e) {
+        $app->response->setStatus(404);
+        $app->response->setBody(getErrorMessage($e));
+        return json_encode($app->response->getBody());
+    }
+}
 
+function getAllRatingsByRecipientID($id) {
+    $app = \Slim\Slim::getInstance();
+    try {
+        $app->response->write(json_encode(RatingsDAO::getAllByRecipient($id), JSON_FORCE_OBJECT));
+        return json_encode($app->response->getBody());
+    } catch (Exception $e) {
+        $app->response->setStatus(404);
+        $app->response->setBody(getErrorMessage($e));
+        return json_encode($app->response->getBody());
+    }
+}
+
+function getAllRatingsByPublisherID($id) {
+    $app = \Slim\Slim::getInstance();
+    try {
+        $app->response->write(json_encode(RatingsDAO::getAllByPublisher($id), JSON_FORCE_OBJECT));
+        return json_encode($app->response->getBody());
+    } catch (Exception $e) {
+        $app->response->setStatus(404);
+        $app->response->setBody(getErrorMessage($e));
+        return json_encode($app->response->getBody());
+    }
+}
+
+function getSingleRecipientRatingByID($id) {
+    $app = \Slim\Slim::getInstance();
+    try {
+        $app->response->write(json_encode(RatingsDAO::getOneByRecipient($id)));
+        return json_encode($app->response->getBody());
+    } catch (Exception $e) {
+        $app->response->setStatus(404);
+        $app->response->setBody(getErrorMessage($e));
+        return json_encode($app->response->getBody());
+    }
+}
+
+function getSinglePublisherRatingByID($id) {
+    $app = \Slim\Slim::getInstance();
+    try {
+        $app->response->write(json_encode(RatingsDAO::getOneByPublisher($id)));
+        return json_encode($app->response->getBody());
+    } catch (Exception $e) {
+        $app->response->setStatus(404);
+        $app->response->setBody(getErrorMessage($e));
+        return json_encode($app->response->getBody());
+    }
+}
+
+function deleteRatingByID($id) {
+    $app = \Slim\Slim::getInstance();
+    try {
+        $app->response->write(json_encode(RatingsDAO::delete($id)));
+        return json_encode($app->response->getBody());
+    } catch (Exception $e) {
+        $app->response->setStatus(404);
+        $app->response->setBody(getErrorMessage($e));
+        return json_encode($app->response->getBody());
+    }
+}
+
+function publishNewRating() {
+    $app = \Slim\Slim::getInstance();
+    try {
+        $app->response->setBody(json_encode(RatingsDAO::create($app->request->getBody())));
+        $app->response->setStatus(201);
+        return json_encode($app->response->getBody());
+    } catch (Exception $e) {
+        $app->response->setStatus(404);
+        $app->response->setBody(getErrorMessage($e));
+        return json_encode($app->response->getBody());
+    }
+}
+
+function getErrorMessage($exception) {
+    return json_encode(array('error'=> array('message'=> $exception->getMessage())));
+}
+
+//$app->log->info("Slim-Skeleton '/' route");
+
+function reqDataCheck() {
+    $app = \Slim\Slim::getInstance();
+    $data = json_decode($app->request->getBody(), true);
+    if (array_key_exists( 'publisher_id', $data )
+        && array_key_exists ( 'recipient_id', $data )
+        && array_key_exists ( 'rating', $data )
+        && array_key_exists ( 'comment', $data )) {
+        if(isset($data['publisher_id'])
+            && isset($data['recipient_id'])
+            && isset($data['rating'])
+            && isset($data['comment'])) {
+            if(empty($data['publisher_id'])
+                || empty($data['recipient_id'])
+                || empty($data['comment'])
+                || !(($data['rating'] >= 0) && ($data['rating'] <=5))) {
+                $app->halt(422, json_encode(array('status' => 422, 'error' => 'Empty or Invalid value parameters')));
+            }
+        } else {
+            $app->halt(422, json_encode(array('status' => 422, 'error' => 'Undefined parameters')));
+        }
+    } else {
+        $app->halt(422, json_encode(array('status' => 422, 'error' => 'Missing parameters')));
+    }
+}
+
+// Define routes
 $app->group('/api', function () use ($app) {
     $app->group('/rating', function () use ($app) {
 
+        // Get all ratings
+        $app->get('/', 'getAllRatings');
+
         // Get all by recipient id
-        $app->get('/recipient/:id/all/', '');
+        $app->get('/recipient/:id/all/', 'getAllRatingsByRecipientID');
 
         // Get all by publisher id
-        $app->get('/publisher/:id/all/', '');
+        $app->get('/publisher/:id/all/', 'getAllRatingsByPublisherID');
 
         // Get single by recipient id
-        $app->get('/recipient/:id', '');
+        $app->get('/recipient/:id', 'getSingleRecipientRatingByID');
 
         // Get single by publisher id
-        $app->get('/publisher/:id', '');
+        $app->get('/publisher/:id', 'getSinglePublisherRatingByID');
 
         // Delete single rating
-        $app->delete('/delete/:id', '');
+        $app->delete('/delete/:id', 'deleteRatingByID');
 
         // Create new rating
-        $app->post('/create', '');
+        $app->post('/create', 'reqDataCheck', 'publishNewRating');
 
     });
 });

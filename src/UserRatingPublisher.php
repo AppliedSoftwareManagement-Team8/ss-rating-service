@@ -31,13 +31,13 @@ class UserRatingPublisher
             self::RABBIT_MQ_USER,
             self::RABBIT_MQ_PASSWORD);
         self::$channel = self::$connection->channel();
-        self::$channel->queue_declare(self::RABBIT_MQ_QUEUE, false, false, false, false);
+        self::$channel->queue_declare(self::RABBIT_MQ_QUEUE, false, true, false, false);
     }
 
-    public static function publishUserRating($data)
+    public static function publish($data)
     {
         self::connect();
-        $msg = new AMQPMessage(json_decode($data), array('delivery_mode' => 2));
+        $msg = new AMQPMessage(json_encode($data, JSON_UNESCAPED_SLASHES), array('delivery_mode' => 2, "content_type" => "application/json"));
         self::$channel->basic_publish($msg, '', self::RABBIT_MQ_QUEUE);
         self::closeConnection();
     }

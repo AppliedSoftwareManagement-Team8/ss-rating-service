@@ -24,6 +24,7 @@ class RatingsDAO
             self::$connection = new MongoClient(self::MONGO_HOST);
             $db = self::$connection->selectDb(self::DATABASE_NAME);
             self::$collection = $db->selectCollection(self::COLLECTION_NAME);
+            self::$collection->createIndex(array('publisher_id' => 1, 'recipient_id' => 1), array('unique' => 1, 'dropDups' => 1));
         }
         return true;
     }
@@ -47,7 +48,7 @@ class RatingsDAO
         $ratings = self::$collection->find($criteria);
         $result = array();
         foreach ($ratings as $rating) {
-            $result[] = $rating;
+            $result['ratings'][] = $rating;
         }
         self::closeConnection();
         return $result;
@@ -60,7 +61,7 @@ class RatingsDAO
         $ratings = self::$collection->find($criteria);
         $result = array();
         foreach ($ratings as $rating) {
-            $result[] = $rating;
+            $result['ratings'][] = $rating;
         }
         self::closeConnection();
         return $result;
@@ -87,10 +88,10 @@ class RatingsDAO
     public static function create($doc)
     {
         self::connect();
-        $data = json_decode($doc);
+        $data = json_decode($doc, true);
         $result = self::$collection->insert($data);
-        self::calcAverage($data['recipient_id']);
         self::closeConnection();
+        self::calcAverage($data['recipient_id']);
         return array('success' => 'created');
     }
 
@@ -109,17 +110,20 @@ class RatingsDAO
     }
 
     public static function calcAverage($recipient_id) {
+        self::connect();
         $criteria = array('recipient_id' => $recipient_id);
         $ratings = self::$collection->find($criteria, array(
-            'recipient_id' => 1
+            'rating' => 1
         ));
+        $ratingsCount = self::$collection->count($criteria);
+        self::closeConnection();
         $result = 0;
         foreach ($ratings as $rating) {
-            $result += $rating;
+            $result += $rating['rating'];
         }
-        $average = $result/count($ratings);
-        $userRating = array( 'userID' => $recipient_id, 'rating' => $average);
-        UserRatingPublisher::publishUserRating($userRating);
+        $average = round(round( $result/$ratingsCount, 3, PHP_ROUND_HALF_EVEN), 1);
+        $userRating = array( 'id' => $recipient_id, 'rating' => $average);
+        UserRatingPublisher::publish($userRating);
     }
 
     private function closeConnection()
