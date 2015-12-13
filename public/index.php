@@ -54,22 +54,10 @@ function getAllRatingsByPublisherID($id) {
     }
 }
 
-function getSingleRecipientRatingByID($id) {
+function getSingleRatingByID($id) {
     $app = \Slim\Slim::getInstance();
     try {
-        $app->response->write(json_encode(RatingsDAO::getOneByRecipient($id)));
-        return json_encode($app->response->getBody());
-    } catch (Exception $e) {
-        $app->response->setStatus(404);
-        $app->response->setBody(getErrorMessage($e));
-        return json_encode($app->response->getBody());
-    }
-}
-
-function getSinglePublisherRatingByID($id) {
-    $app = \Slim\Slim::getInstance();
-    try {
-        $app->response->write(json_encode(RatingsDAO::getOneByPublisher($id)));
+        $app->response->write(json_encode(RatingsDAO::getOneByID($id)));
         return json_encode($app->response->getBody());
     } catch (Exception $e) {
         $app->response->setStatus(404);
@@ -136,22 +124,19 @@ function reqDataCheck() {
 
 // Define routes
 $app->group('/api', function () use ($app) {
-    $app->group('/rating', function () use ($app) {
+    $app->group('/ratings', function () use ($app) {
 
         // Get all ratings
         $app->get('/', 'getAllRatings');
 
+        // Get single by rating id
+        $app->get('/:id', 'getSingleRatingByID');
+		
         // Get all by recipient id
-        $app->get('/recipient/:id/all/', 'getAllRatingsByRecipientID');
+        $app->get('/recipients/:id', 'getAllRatingsByRecipientID');
 
         // Get all by publisher id
-        $app->get('/publisher/:id/all/', 'getAllRatingsByPublisherID');
-
-        // Get single by recipient id
-        $app->get('/recipient/:id', 'getSingleRecipientRatingByID');
-
-        // Get single by publisher id
-        $app->get('/publisher/:id', 'getSinglePublisherRatingByID');
+        $app->get('/publishers/:id', 'getAllRatingsByPublisherID');
 
         // Delete single rating
         $app->delete('/delete/:id', 'deleteRatingByID');

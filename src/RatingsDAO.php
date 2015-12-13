@@ -67,20 +67,10 @@ class RatingsDAO
         return $result;
     }
 
-    public static function getOneByPublisher($id)
+    public static function getOneByID($id)
     {
         self::connect();
-        $criteria = array('publisher_id' => $id);
-        $result = self::$collection->findOne($criteria);
-        self::closeConnection();
-        return $result;
-    }
-
-    public static function getOneByRecipient($id)
-    {
-        self::connect();
-        $criteria = array('recipient_id' => $id);
-        $result = self::$collection->findOne($criteria);
+        $result = self::$collection->findOne(array('_id' => new MongoId($id)));
         self::closeConnection();
         return $result;
     }
