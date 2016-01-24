@@ -5,6 +5,12 @@ require_once '../src/JsonResponse.php';
 
 // Prepare app
 $app = new \Slim\Slim();
+$corsOptions = array(
+    "origin" => "*",
+    "maxAge" => 1728000
+);
+$app->add(new \CorsSlim\CorsSlim($corsOptions));
+$app->add(new JsonResponse());
 $app->notFound(
     function () use ($app) {
         $app->log->error('Not Found', array('path' => $app->request()->getPath()));
@@ -124,13 +130,11 @@ function reqDataCheck() {
 
 // Define routes
 $app->group('/api', function () use ($app) {
-    $app->group('/ratings', function () use ($app) {
-
-        // Get all ratings
+    // Get all ratings
         $app->get('/', 'getAllRatings');
 
         // Get single by rating id
-        $app->get('/:id', 'getSingleRatingByID');
+        $app->get('/:id/', 'getSingleRatingByID');
 		
         // Get all by recipient id
         $app->get('/recipients/:id', 'getAllRatingsByRecipientID');
@@ -143,8 +147,6 @@ $app->group('/api', function () use ($app) {
 
         // Create new rating
         $app->post('/create', 'reqDataCheck', 'publishNewRating');
-
-    });
 });
 
 // Run app
